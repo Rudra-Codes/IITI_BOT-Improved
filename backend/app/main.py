@@ -36,7 +36,7 @@ database = mongo_client['IITI_BOT']
 users_collection = database['users']
 pending_users_collection = database['pending_users']
 
-SECRET_KEY = os.getenv["SECRET_KEY"]
+SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 # Using direct bcrypt to avoid passlib compatibility issues with newer bcrypt versions
@@ -253,12 +253,9 @@ async def ask_question(
     )
 @app.get('/history')
 async def get_history(request: Request, token: str = Depends(oauth2_scheme)):
-    print(token)
     email,_ = get_current_user(token)
-    print(email)
     user = users_collection.find_one({"email": email})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    history = user.get('chats', {})
-    print(history)
+    history = user.get('chats', [])
     return history
