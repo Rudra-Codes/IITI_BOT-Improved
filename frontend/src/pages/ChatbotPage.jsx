@@ -77,7 +77,7 @@ export default function ChatbotPage() {
     const mappedIndex = chatIdIndexMap[currentActiveChat];
     const chat_id_index = mappedIndex !== undefined ? mappedIndex : parseInt(currentActiveChat, 10) || 0;
 
-    fetch("http://localhost:8000/ask", {
+    fetch(`${import.meta.env.VITE_API_URL}/ask`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

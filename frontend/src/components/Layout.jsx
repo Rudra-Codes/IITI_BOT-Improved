@@ -46,7 +46,7 @@ export default function Layout() {
   useEffect(() => {
     const fetchChats = async () => {
       try {
-        const res = await fetch("http://localhost:8000/history", {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/history`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,

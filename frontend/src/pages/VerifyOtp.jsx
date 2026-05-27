@@ -21,7 +21,7 @@ export default function VerifyOTP() {
     setSuccess("");
 
     try {
-      const response = await fetch("http://localhost:8000/verify-email", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/verify-email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, otp: String(otp) }),
