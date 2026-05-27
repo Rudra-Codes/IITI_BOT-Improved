@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+pymongo
+pathway
+pathway[xpack-llm]
+langchain-groq
+litellm
+tavily-python
+sentence-transformers
+# langchain-community
+python-jose[cryptography]
+passlib[bcrypt]
+bcrypt
+httpx
+python-dotenv

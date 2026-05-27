@@ -1,0 +1,96 @@
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Dependency directories
+node_modules/
+vendor/
+
+# Build outputs
+dist/
+build/
+out/
+coverage/
+
+# Cache files
+.cache/
+.tmp/
+temp/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+venv/
+
+# Java
+*.class
+*.jar
+*.war
+target/
+
+# Go
+bin/
+
+# Rust
+target/
+Cargo.lock
+
+# C / C++
+*.o
+*.obj
+*.exe
+
+# macOS
+.AppleDouble
+.LSOverride
+
+# Linux
+*~
+
+# Archives
+*.zip
+*.tar
+*.gz
+*.rar
+
+# Database
+*.sqlite
+*.db
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+
+# Docker
+.docker/
+
+# Testing
+coverage/
+htmlcov/
+
+# Misc
+*.bak
+*.tmp
+test*
