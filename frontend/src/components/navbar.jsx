@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import logo from "/src/assets/images/logo.svg";
 
@@ -7,12 +7,13 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const { pathname } = useLocation();
-  const { isLoggedIn, userId, setIsLoggedIn, setUserId } = useAuth();
+  const { isLoggedIn, userName, logout } = useAuth();
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setUserId(null);
-    localStorage.removeItem("userEmail");
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");
   };
 
   return (
@@ -36,7 +37,7 @@ export default function Navbar() {
 
           {isLoggedIn ? (
             <>
-              <span className="text-purple-300 text-sm">👋 Hello, {userId?.split("@")[0]}</span>
+              <span className="text-purple-300 text-sm"> Hello, {userName}</span>
               <button
                 onClick={handleLogout}
                 className="rounded border border-white px-3 py-1 text-sm text-white hover:bg-white hover:text-black"
@@ -69,7 +70,7 @@ export default function Navbar() {
 
           {isLoggedIn ? (
             <>
-              <span className="text-purple-300 text-sm">👋 {userId?.split("@")[0]}</span>
+              <span className="text-purple-300 text-sm">👋 {userName}</span>
               <button
                 onClick={handleLogout}
                 className="text-white rounded border border-white px-3 py-1 text-sm hover:bg-white hover:text-black"

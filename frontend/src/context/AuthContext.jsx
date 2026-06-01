@@ -36,13 +36,21 @@ export const AuthProvider = ({ children }) => {
     setUserName(email.split("@")[0]);
   };
 
-  const logout = () => {
+  const logout = async () => {
     setToken(null);
     setUserEmail(null);
     setUserName("");
     setIsLoggedIn(false);
-    localStorage.removeItem("token");
-    localStorage.removeItem("userEmail");
+    localStorage.clear();
+    sessionStorage.clear();
+    if ('caches' in window) {
+      try {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map(name => caches.delete(name)));
+      } catch (e) {
+        console.error("Failed to clear caches:", e);
+      }
+    }
   };
 
   return (

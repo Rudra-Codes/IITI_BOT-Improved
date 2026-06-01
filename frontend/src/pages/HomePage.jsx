@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence, easeOut } from "framer-motion";
+import { useAuth } from "../context/AuthContext";
 import logo from "/src/assets/images/logo.svg";
 
 export default function Homepage() {
@@ -9,6 +10,7 @@ export default function Homepage() {
   const [animateLogo, setAnimateLogo] = useState(false);
 
   const navigate = useNavigate();
+  const { isLoggedIn } = useAuth();
 
   const playSound = (src, volume = 0.5) => {
     const audio = new Audio(src);
@@ -18,6 +20,12 @@ export default function Homepage() {
 
   const handleGetStarted = () => {
     playSound("/sounds/click.mp3", 0.4);
+    
+    if (!isLoggedIn) {
+      navigate("/login");
+      return;
+    }
+
     setClicked(true);
 
     setTimeout(() => {
