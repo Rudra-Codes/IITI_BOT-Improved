@@ -1,5 +1,5 @@
 import os
-import threading
+# import threading
 import random
 from datetime import datetime, timedelta
 from contextlib import asynccontextmanager
@@ -40,7 +40,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 # Using direct bcrypt to avoid passlib compatibility issues with newer bcrypt versions
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+    oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 SENDER_EMAIL = os.getenv("SENDER_EMAIL")
 
 class InputSchema(pw.Schema):

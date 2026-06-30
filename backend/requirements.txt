@@ -8,8 +8,10 @@ litellm
 tavily-python
 sentence-transformers
 # langchain-community
-python-jose[cryptography]
-passlib[bcrypt]
+python-jose
+cryptography
+passlib
+bcrypt
 bcrypt
 httpx
 python-dotenv
