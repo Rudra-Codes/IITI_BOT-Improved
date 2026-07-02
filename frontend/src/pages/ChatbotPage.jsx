@@ -7,13 +7,12 @@ const ChatMessage = ({ role, content }) => {
   const isProcessing = content === "Processing your query...";
   return (
     <div
-      className={`${
-        role === "user"
+      className={`${role === "user"
           ? "self-end border-purple-500 bg-[#2c1850]"
           : isProcessing
-          ? "self-start text-white"
-          : "self-start bg-[#1f1036] border-purple-700"
-      } border rounded-2xl px-5 py-3 max-w-[90%] text-white text-sm md:text-base leading-relaxed mb-4 break-words`}
+            ? "self-start text-white"
+            : "self-start bg-[#1f1036] border-purple-700"
+        } border rounded-2xl px-5 py-3 max-w-[90%] text-white text-sm md:text-base leading-relaxed mb-4 break-words`}
     >
       {content}
     </div>
@@ -63,19 +62,25 @@ export default function ChatbotPage() {
     const botPlaceholder = { role: "assistant", content: "Processing your query..." };
 
     let currentActiveChat = activeChat;
-    
+    let expectedBackendLength;
+
     if (!currentActiveChat) {
       currentActiveChat = handleFirstUserMessage(trimmed);
       setChatMessages(prev => ({ ...prev, [currentActiveChat]: [userMessage, botPlaceholder] }));
+      expectedBackendLength = 2;
     } else {
-      setChatMessages(prev => ({ 
-        ...prev, 
-        [currentActiveChat]: [...(prev[currentActiveChat] || []), userMessage, botPlaceholder] 
+      const prevLength = (chatMessages[currentActiveChat] || []).length;
+      setChatMessages(prev => ({
+        ...prev,
+        [currentActiveChat]: [...(prev[currentActiveChat] || []), userMessage, botPlaceholder]
       }));
+      expectedBackendLength = prevLength + 2;
     }
 
     const mappedIndex = chatIdIndexMap[currentActiveChat];
     const chat_id_index = mappedIndex !== undefined ? mappedIndex : parseInt(currentActiveChat, 10) || 0;
+
+    let isDone = false;
 
     fetch(`${import.meta.env.VITE_API_URL}/ask`, {
       method: "POST",
@@ -88,18 +93,83 @@ export default function ChatbotPage() {
       .then(async res => {
         if (!res.ok) throw new Error(await res.text());
         const data = await res.json();
-        setChatMessages(prev => {
-          const msgs = prev[currentActiveChat] || [];
-          return { ...prev, [currentActiveChat]: [...msgs.slice(0, -1), { role: "assistant", content: <ReactMarkdown>{ data || "No response."}</ReactMarkdown> }] };
-        });
+        
+        let finalContent = "No response.";
+        if (typeof data === "string") {
+          finalContent = data;
+        } else if (data && typeof data === "object") {
+          finalContent = data.result || data.answer || data.content || JSON.stringify(data);
+        }
+        
+        if (!isDone) {
+          isDone = true;
+          setChatMessages(prev => {
+            const msgs = prev[currentActiveChat] || [];
+            return { ...prev, [currentActiveChat]: [...msgs.slice(0, -1), { role: "assistant", content: <ReactMarkdown>{finalContent}</ReactMarkdown> }] };
+          });
+        }
       })
       .catch(err => {
         console.error("❌ Error sending message:", err);
-        setChatMessages(prev => {
-          const msgs = prev[currentActiveChat] || [];
-          return { ...prev, [currentActiveChat]: [...msgs.slice(0, -1), { role: "assistant", content: "An error occurred while sending the message." }] };
-        });
+        // We do not set isDone = true here. 
+        // If the POST request fails (e.g., Vercel timeout), we want the polling mechanism 
+        // to continue checking the database for the backend's eventual response.
       });
+
+    // Start polling the history endpoint
+    const startTime = Date.now();
+    const timeoutDuration = 60 * 1000; // 1 minute timeout
+
+    const checkHistory = async () => {
+      if (isDone) return; // Stop if already done by fetch or timeout
+
+      if (Date.now() - startTime > timeoutDuration) {
+        if (!isDone) {
+          isDone = true;
+          setChatMessages(prev => {
+            const msgs = prev[currentActiveChat] || [];
+            return { ...prev, [currentActiveChat]: [...msgs.slice(0, -1), { role: "assistant", content: "Timeout: No response received within 1 minute. The result might appear later in your history." }] };
+          });
+        }
+        return;
+      }
+
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/history`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const chatHistory = data[chat_id_index] || [];
+
+          if (chatHistory.length >= expectedBackendLength && !isDone) {
+            isDone = true;
+            const latestMessage = chatHistory[chatHistory.length - 1];
+
+            setChatMessages(prev => {
+              const msgs = prev[currentActiveChat] || [];
+              return {
+                ...prev,
+                [currentActiveChat]: [...msgs.slice(0, -1), { role: "assistant", content: <ReactMarkdown>{latestMessage.content || "No response."}</ReactMarkdown> }]
+              };
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Error polling history:", err);
+      }
+
+      if (!isDone) {
+        setTimeout(checkHistory, 5000); // Poll again in 5 seconds
+      }
+    };
+
+    // Trigger the first poll after 5 seconds
+    setTimeout(checkHistory, 5000);
 
     setInput("");
     setStarted(true);
@@ -113,9 +183,8 @@ export default function ChatbotPage() {
 
   return (
     <div
-      className={`min-h-screen text-white overflow-hidden flex flex-col transition-all duration-1000 ease-in-out ${
-        started ? "bg-gradient-to-br" : ""
-      }`}
+      className={`min-h-screen text-white overflow-hidden flex flex-col transition-all duration-1000 ease-in-out ${started ? "bg-gradient-to-br" : ""
+        }`}
       style={{
         background: started
           ? "radial-gradient(ellipse 50% 50% at 50% 10%, #371F5A, #371F5A, #11071F)"
@@ -176,11 +245,10 @@ export default function ChatbotPage() {
               <button
                 onClick={handleSend}
                 disabled={!input.trim()}
-                className={`flex h-10 w-10 items-center justify-center rounded-full transition ${
-                  input.trim()
+                className={`flex h-10 w-10 items-center justify-center rounded-full transition ${input.trim()
                     ? "bg-purple-600 text-white hover:opacity-80"
                     : "bg-white text-purple-600 cursor-not-allowed"
-                }`}
+                  }`}
               >
                 ➤
               </button>
