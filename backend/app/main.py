@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 from typing import Optional
-import pathway as pw
+# import pathway as pw
 # from app.pipeline2 import Retriever
 import smtplib
 import ssl
@@ -40,14 +40,14 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 # Using direct bcrypt to avoid passlib compatibility issues with newer bcrypt versions
-    oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 SENDER_EMAIL = os.getenv("SENDER_EMAIL")
 
-class InputSchema(pw.Schema):
-    chat_id: int
-    email: str
-    queries: str
-    # session_id: str = pw.column_definition(primary_key=True)
+# class InputSchema(pw.Schema):
+#     chat_id: int
+#     email: str
+#     queries: str
+#     # session_id: str = pw.column_definition(primary_key=True)
 
 
 class UserSignup(BaseModel):
@@ -125,22 +125,22 @@ def send_otp_email(receiver_email, otp):
 
 
 # Pathway logic
-def run_pathway():
+# def run_pathway():
     
-    input_, output_writer = pw.io.http.rest_connector(
-        webserver=pw.io.http.PathwayWebserver(host="0.0.0.0", port=8003),
-        route="/ask",
-        schema=InputSchema,
-        delete_completed_queries=True
-    )
-    input2 = input_.with_columns(user_id=pw.this.id)
-    retriever = Retriever()
-    output = retriever(input2)
-    input_.promise_universe_is_equal_to(output)
-    output = output.with_universe_of(input_)
-    # print(input_.typehints())
-    output_writer(output)
-    pw.run()
+#     input_, output_writer = pw.io.http.rest_connector(
+#         webserver=pw.io.http.PathwayWebserver(host="0.0.0.0", port=8003),
+#         route="/ask",
+#         schema=InputSchema,
+#         delete_completed_queries=True
+#     )
+#     input2 = input_.with_columns(user_id=pw.this.id)
+#     retriever = Retriever()
+#     output = retriever(input2)
+#     input_.promise_universe_is_equal_to(output)
+#     output = output.with_universe_of(input_)
+#     # print(input_.typehints())
+#     output_writer(output)
+#     pw.run()
 
 
 @asynccontextmanager
@@ -237,8 +237,8 @@ async def ask_question(
 
     # 4. Use the global client and pass payload to `json=`
     pathway_response = await request.app.state.http_client.request(
-        method=request.method,
-        url="http://0.0.0.0:8003/ask",
+        method="POST",
+        url= os.environ.get("BOT_ENDPOINT", "http://0.0.0.0:8003/ask"),
         headers=headers,
         json=payload # httpx automatically handles json parsing.
     )

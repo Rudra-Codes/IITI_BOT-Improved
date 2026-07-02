@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 
 
 load_dotenv()
-
+# print(os.getenv("MONGODB_URI"))
 mongo_client = MongoClient(os.getenv("MONGODB_URI"))
 
 # Send a ping to confirm a successful connection
