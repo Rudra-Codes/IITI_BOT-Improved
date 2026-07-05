@@ -1,6 +1,9 @@
+# Note - currently setting vector dataset as static to save deployemnt cost of container apps, make it streaming on actual deployemnt
+
 import pathway as pw
 from pathway.xpacks.llm import llms, embedders, rerankers
 import os
+import torch
 # import json
 from pathway.udfs import ExponentialBackoffRetryStrategy
 import numpy as np
@@ -34,7 +37,7 @@ system_prompt_retriever = """
 You are an AI language model assistant.
 Your task is to generate three different versions of the given user question to retrieve relevant documents from a vector database.
 By generating multiple perspectives on the user question, your goal is to help the user overcome some of the limitations of the distance-based similarity search.
-Provide these three alternative questions separated by newlines.
+Provide atmost two alternative questions separated by newlines.
 Output only the generated queries not including any other text.
 """
 
@@ -126,7 +129,7 @@ def update_history(email: str, chat_id: int, query: str, result: str) -> int:
         {"email": email},
         {"$set": {"chats": chats}}
     )
-    return 0
+    return 1
 
 class InputCSVDataSchema(pw.Schema):
     # row_id: str
@@ -146,23 +149,27 @@ def web_content(question:str) -> tuple:
     content_list = tuple(result["content"] for result in results)
     return content_list
 
-
+@pw.udf
+def query_parser(args) -> list[dict]:
+  return [{"role": "system", "content": system_prompt_retriever}, {"role": "user", "content": f"{args}"}]
 
 
 class Retriever():
 
-  def __init__(self, model:str = model, system_prompt:str = system_prompt_retriever, path_csv:str = path):
+  def __init__(self, model:str = model, path_csv:str = path):
     # Setting llm
     self.llm = llms.LiteLLMChat(model=model, retry_strategy=ExponentialBackoffRetryStrategy(max_retries=2))
-    self.system_prompt = system_prompt
-    self.embedder = embedders.SentenceTransformerEmbedder(model="all-MiniLM-L6-v2")
-    self.reranker = rerankers.LLMReranker(llm=llms.LiteLLMChat(model=model, retry_strategy=ExponentialBackoffRetryStrategy(max_retries=1), response_format={'type': 'json_object'}))
-   
+    # self.system_prompt = system_prompt
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    self.embedder = embedders.SentenceTransformerEmbedder(model="all-MiniLM-L6-v2", device=device)
+    # self.reranker = rerankers.LLMReranker(llm=llms.LiteLLMChat(model=model, retry_strategy=ExponentialBackoffRetryStrategy(max_retries=1), response_format={'type': 'json_object'}))
+    self.reranker = rerankers.CrossEncoderReranker(model_name="cross-encoder/ms-marco-MiniLM-L-6-v2", device=device)
     self.number_of_web_search = 0
     self.csv_data = pw.io.csv.read(
     path_csv,
     schema=InputCSVDataSchema,
-    mode="streaming"
+    # mode="streaming"
+    mode="static"
     )
     def parse_nested_embedding(embedding_str):
       try:
@@ -209,13 +216,8 @@ class Retriever():
     question = self.llm(llms.prompt_chat_single_qa(prompt), temperature = 0.0)
     return pw.if_else(question == "No web search", None, web_content(question))
 
-
   @pw.table_transformer
   def equivalent_queries(self, queries:pw.Table):
-
-    @pw.udf
-    def query_parser(args) -> list[dict]:
-      return [{"role": "system", "content": self.system_prompt}, {"role": "user", "content": f"{args}"}]
 
     response = queries.with_columns(questions = split_lines(self.llm(query_parser(pw.this.queries), temperature=0.0)))
 

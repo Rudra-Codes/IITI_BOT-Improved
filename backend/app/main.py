@@ -161,7 +161,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.post("/signup")
+@app.post("/signup")    
 async def signup(user: UserSignup, background_tasks: BackgroundTasks):
     if users_collection.find_one({"email": user.email}) or pending_users_collection.find_one({"email": user.email}):
         raise HTTPException(status_code=400, detail="Email already exists or is pending verification")

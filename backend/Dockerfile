@@ -9,9 +9,9 @@ WORKDIR /app
 #     gcc \
 #     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements_pinned.txt .
+COPY requirements_pathway.txt .
 
-RUN pip install --no-cache-dir -r requirements_pinned.txt
+RUN pip install --no-cache-dir -r requirements_pathway.txt
 
 COPY app/pathway_server.py /app/app/pathway_server.py
 COPY app/pipeline2.py /app/app/pipeline2.py
