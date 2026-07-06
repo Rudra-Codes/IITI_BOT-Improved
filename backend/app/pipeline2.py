@@ -1,4 +1,5 @@
 # Note - currently setting vector dataset as static to save deployemnt cost of container apps, make it streaming on actual deployemnt
+# Also commenting out some debug print commands, if want to modify code in future then pls uncomment them as they are helpful to debug ... 
 
 import pathway as pw
 from pathway.xpacks.llm import llms, embedders, rerankers
@@ -66,9 +67,9 @@ def prompt_final_ans(query:str, docs:tuple, completions) -> list[dict]:
   Output just the answer to user query.
   """
   
-  print(list(completions))
+  # print(list(completions))
   ans = [{"role": "system", "content": system_prompt}]+list(completions)+[{'role':"assistant", "content": "\n".join(docs)} ,{"role": "user", "content": query}]
-  print(ans)
+  # print(ans)
   return ans
 
 @pw.udf
@@ -94,7 +95,7 @@ def CRAG_good_docs(state: dict | None, rows) -> pw.Json:
         state["docs"].append(docs[i])
         state["number"] += 1
   
-  print("length is: ", len(state["doc_id"]), "State is: ", state)
+  # print("length is: ", len(state["doc_id"]), "State is: ", state)
 
   return pw.Json(state)
 
