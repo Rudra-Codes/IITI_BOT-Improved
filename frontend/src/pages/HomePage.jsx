@@ -10,7 +10,7 @@ export default function Homepage() {
   const [animateLogo, setAnimateLogo] = useState(false);
 
   const navigate = useNavigate();
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, token, logout } = useAuth();
 
   const playSound = (src, volume = 0.5) => {
     const audio = new Audio(src);
@@ -18,11 +18,30 @@ export default function Homepage() {
     audio.play();
   };
 
-  const handleGetStarted = () => {
+  const handleGetStarted = async () => {
     playSound("/sounds/click.mp3", 0.4);
-    
+
     if (!isLoggedIn) {
       navigate("/login");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/history`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        await logout();
+        navigate("/login", { state: { message: "You have been logged out." } });
+        return;
+      }
+    } catch (error) {
+      console.error("Error validating token:", error);
+      await logout();
+      navigate("/login", { state: { message: "You have been logged out." } });
       return;
     }
 

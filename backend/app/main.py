@@ -38,7 +38,7 @@ pending_users_collection = database['pending_users']
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_DAYS = 5
 # Using direct bcrypt to avoid passlib compatibility issues with newer bcrypt versions
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 SENDER_EMAIL = os.getenv("SENDER_EMAIL")
@@ -83,7 +83,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 def create_access_token(data: dict):
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.utcnow() + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -259,3 +259,11 @@ async def get_history(request: Request, token: str = Depends(oauth2_scheme)):
         raise HTTPException(status_code=404, detail="User not found")
     history = user.get('chats', [])
     return history
+
+@app.get('/user')
+async def get_user(token: str = Depends(oauth2_scheme)):
+    email, _ = get_current_user(token)
+    user = users_collection.find_one({'email': email})
+    if user :
+        return {'email': email, 'username': user.get('name', 'user')}
+    raise HTTPException(status_code=404, detail="User not found")

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
@@ -7,6 +7,8 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const { setIsLoggedIn, setUserId, setUserName, setToken } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const message = location.state?.message;
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -46,6 +48,11 @@ export default function Login() {
         {/* Login form */}
         <div className="w-full max-w-md bg-[#3a0066] p-10 rounded-xl border border-white/20 shadow-2xl">
           <h2 className="text-2xl font-bold mb-6">Login</h2>
+          {message && (
+            <div className="mb-4 text-red-200 bg-red-900/80 p-3 rounded">
+              {message}
+            </div>
+          )}
           <form className="flex flex-col gap-4" onSubmit={handleLogin}>
             <input
               type="email"
